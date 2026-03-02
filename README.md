@@ -271,6 +271,10 @@ Run locally:
 python3 -m streamlit run app.py
 ```
 
+- Format code: python3 -m black app.py
+- Lint with Flake8: python3 -m flake8 app.py
+- Lint with Pylint: python3 -m pylint app.py
+
 ---
 
 ## 12. Future Work & Current Limitations
