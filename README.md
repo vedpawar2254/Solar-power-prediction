@@ -17,34 +17,6 @@ The final solution allows users to upload raw plant data and receive:
 
 ---
 
-## 2. Problem Statement
-
-Solar energy generation is inherently variable due to:
-
-* Cloud cover fluctuations
-* Temperature variation
-* Irradiance instability
-* Diurnal and seasonal cycles
-
-Grid operators require short-term forecasting to:
-
-* Maintain grid stability
-* Optimize battery storage
-* Balance demand and supply
-* Reduce reliance on fossil fuel backups
-
-The core problem is:
-
-> Given historical inverter-level solar generation data and environmental conditions, predict the plant-level DC power output 15 minutes into the future.
-
-Key challenges:
-
-* Strong time-dependency in power output
-* Nonlinear relationships between weather and generation
-* High variance during sunrise and sunset transitions
-* Noise in inverter-level measurements
-
-This system addresses the problem as a supervised regression task with temporal feature engineering.
 
 ---
 
