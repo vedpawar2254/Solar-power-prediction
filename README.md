@@ -65,8 +65,7 @@ solar-forecasting/
 ├── solar_forecast_model.pkl    # Trained ML model
 ├── requirements.txt            # Dependencies
 ├── README.md                   # Project documentation
-└── notebooks/
-    └── training.ipynb          # Model training notebook
+├── Data
 ```
 
 ---
