@@ -1,3 +1,5 @@
+"""AI-Based Solar Energy Forecasting System Streamlit App."""
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -19,16 +21,18 @@ if gen_file is not None and weather_file is not None:
     gen_df["DATE_TIME"] = pd.to_datetime(gen_df["DATE_TIME"])
     weather_df["DATE_TIME"] = pd.to_datetime(weather_df["DATE_TIME"])
 
-    gen_agg = gen_df.groupby("DATE_TIME").agg({
-        "DC_POWER": "sum"
-    }).reset_index()
+    gen_agg = (
+        gen_df.groupby("DATE_TIME").agg({"DC_POWER": "sum"}).reset_index()
+    )
 
+    weather_cols = [
+        "DATE_TIME",
+        "AMBIENT_TEMPERATURE",
+        "MODULE_TEMPERATURE",
+        "IRRADIATION",
+    ]
     df = pd.merge(
-        gen_agg,
-        weather_df[["DATE_TIME", "AMBIENT_TEMPERATURE", 
-                    "MODULE_TEMPERATURE", "IRRADIATION"]],
-        on="DATE_TIME",
-        how="inner"
+        gen_agg, weather_df[weather_cols], on="DATE_TIME", how="inner"
     )
 
     df = df.sort_values("DATE_TIME").reset_index(drop=True)
@@ -62,7 +66,7 @@ if gen_file is not None and weather_file is not None:
 
     st.subheader("15-Minute Ahead Forecast")
 
-    fig, ax = plt.subplots(figsize=(12,5))
+    fig, ax = plt.subplots(figsize=(12, 5))
     ax.plot(y.values[:200], label="Actual")
     ax.plot(preds[:200], label="Predicted")
     ax.legend()
