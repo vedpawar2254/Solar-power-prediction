@@ -34,7 +34,7 @@ Grid operators require short-term forecasting to:
 
 The core problem is:
 
-	⁠Given historical inverter-level solar generation data and environmental conditions, predict the plant-level DC power output 15 minutes into the future.
+# ⁠Given historical inverter-level solar generation data and environmental conditions, predict the plant-level DC power output 15 minutes into the future.
 
 Key challenges:
 
