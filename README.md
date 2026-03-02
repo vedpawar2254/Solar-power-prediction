@@ -50,6 +50,9 @@ This system addresses the problem as a supervised regression task with temporal 
 ## 3. Team
 
 * Ved — Model development, feature engineering, deployment, system integration
+* Aviral Mishra — Data and Quality Lead
+* Naitik Pandey — Report and Evaluation Lead
+* Samarth Khera — Analysis Lead
 
 ---
 
