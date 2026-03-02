@@ -13,20 +13,16 @@ gen_file = st.file_uploader("Upload Generation Data", type=["csv"])
 weather_file = st.file_uploader("Upload Weather Data", type=["csv"])
 
 if gen_file is not None and weather_file is not None:
-
-    # Load data
     gen_df = pd.read_csv(gen_file)
     weather_df = pd.read_csv(weather_file)
 
     gen_df["DATE_TIME"] = pd.to_datetime(gen_df["DATE_TIME"])
     weather_df["DATE_TIME"] = pd.to_datetime(weather_df["DATE_TIME"])
 
-    # Aggregate plant-level generation
     gen_agg = gen_df.groupby("DATE_TIME").agg({
         "DC_POWER": "sum"
     }).reset_index()
 
-    # Merge with weather
     df = pd.merge(
         gen_agg,
         weather_df[["DATE_TIME", "AMBIENT_TEMPERATURE", 
@@ -37,22 +33,16 @@ if gen_file is not None and weather_file is not None:
 
     df = df.sort_values("DATE_TIME").reset_index(drop=True)
 
-    # Time features
     df["hour"] = df["DATE_TIME"].dt.hour
     df["dayofyear"] = df["DATE_TIME"].dt.dayofyear
     df["month"] = df["DATE_TIME"].dt.month
-
-    # Lag features
     df["lag_1"] = df["DC_POWER"].shift(1)
     df["lag_4"] = df["DC_POWER"].shift(4)
     df["rolling_mean_4"] = df["DC_POWER"].rolling(4).mean()
 
-    # Target shift (15-min ahead forecast)
     df["target"] = df["DC_POWER"].shift(-1)
 
     df = df.dropna().reset_index(drop=True)
-
-    # Load trained model
     model = joblib.load("solar_forecast_model.pkl")
 
     X = df.drop(columns=["DATE_TIME", "DC_POWER", "target"])
@@ -60,7 +50,6 @@ if gen_file is not None and weather_file is not None:
 
     preds = model.predict(X)
 
-    # Metrics
     mae = mean_absolute_error(y, preds)
     rmse = np.sqrt(mean_squared_error(y, preds))
     r2 = r2_score(y, preds)
@@ -71,17 +60,13 @@ if gen_file is not None and weather_file is not None:
     st.write(f"RMSE: {rmse:.2f}")
     st.write(f"R2 Score: {r2:.4f}")
 
-    # Plot
     st.subheader("15-Minute Ahead Forecast")
 
     fig, ax = plt.subplots(figsize=(12,5))
     ax.plot(y.values[:200], label="Actual")
     ax.plot(preds[:200], label="Predicted")
     ax.legend()
-
     st.pyplot(fig)
-
-    # Trend Insights (Deliverable requirement)
     st.subheader("Trend Analysis")
 
     hourly_trend = df.groupby("hour")["DC_POWER"].mean()
