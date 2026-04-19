@@ -121,6 +121,8 @@ Evaluation metrics (MAE, RMSE, R²)
 
 Tool: Streamlit
 
+Live App: https://solar-power-prediction-milestone1.streamlit.app/
+
 Functionality:
 
 User inputs environmental parameters

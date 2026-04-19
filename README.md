@@ -2,7 +2,8 @@
 
 **15-minute ahead DC power forecasting + agentic grid optimisation assistant**
 
-[![Streamlit App](https://img.shields.io/badge/Live%20App-Streamlit-FF4B4B)](https://solarpowerpredictionmodel.streamlit.app/)
+[![Milestone 2](https://img.shields.io/badge/Milestone%202-Streamlit-FF4B4B)](https://solarpowerpredictionmodel.streamlit.app/)
+[![Milestone 1](https://img.shields.io/badge/Milestone%201-Streamlit-FF4B4B)](https://solar-power-prediction-milestone1.streamlit.app/)
 [![Model on HuggingFace](https://img.shields.io/badge/Model-HuggingFace-yellow)](https://huggingface.co/nakedved/genai-capstone)
 [![GitHub](https://img.shields.io/badge/GitHub-Repo-blue)](https://github.com/vedpawar2254/Solar-power-prediction)
 
@@ -22,7 +23,8 @@ Two-milestone GenAI capstone project.
 
 | Resource | URL |
 |---|---|
-| Streamlit App | https://solarpowerpredictionmodel.streamlit.app/ |
+| Milestone 2 — Full AI System | https://solarpowerpredictionmodel.streamlit.app/ |
+| Milestone 1 — Forecasting Only | https://solar-power-prediction-milestone1.streamlit.app/ |
 | Model (HuggingFace) | https://huggingface.co/nakedved/genai-capstone |
 | GitHub | https://github.com/vedpawar2254/Solar-power-prediction |
 
