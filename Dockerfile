@@ -25,8 +25,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY app.py agent.py rag.py knowledge_base.py ./
 
 # Streamlit config
-RUN mkdir -p /root/.streamlit
-COPY .streamlit/ /root/.streamlit/ 2>/dev/null || true
+COPY .streamlit/config.toml /root/.streamlit/config.toml
 
 ENV PYTHONUNBUFFERED=1
 ENV STREAMLIT_SERVER_HEADLESS=true
