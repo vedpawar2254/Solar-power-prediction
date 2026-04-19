@@ -4,6 +4,9 @@ numpy
 scikit-learn
 joblib
 matplotlib
-pylint
-flake8
-black
+langgraph
+langchain
+langchain-community
+langchain-groq
+faiss-cpu
+sentence-transformers

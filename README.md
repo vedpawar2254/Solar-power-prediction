@@ -59,13 +59,25 @@ This system addresses the problem as a supervised regression task with temporal 
 ## 4. Repository Structure
 
 ```
-solar-forecasting/
-│
-├── app.py                      # Streamlit application
+Genai capstone/
+├── app.py                      # Unified Streamlit app (Tab 1 + Tab 2)
+├── agent.py                    # LangGraph 3-node agentic workflow
+├── rag.py                      # FAISS vector store + retriever
+├── knowledge_base.py           # Grid management text chunks
 ├── solar_forecast_model.pkl    # Trained ML model
 ├── requirements.txt            # Dependencies
 ├── README.md                   # Project documentation
-├── Data
+├── data/                       # Shared datasets
+│   ├── Plant_1_Generation_Data.csv
+│   ├── Plant_1_Weather_Sensor_Data.csv
+│   ├── Plant_2_Generation_Data.csv
+│   └── Plant_2_Weather_Sensor_Data.csv
+└── milestone_1/                # Original Milestone 1 files
+    ├── app.py
+    ├── solar_model.ipynb
+    ├── solar_forecast_model.pkl
+    ├── requirements.txt
+    └── ARCHITECTURE.md
 ```
 
 ---
@@ -305,3 +317,57 @@ This project demonstrates a complete machine learning pipeline for short-term so
 The system successfully models nonlinear relationships between environmental variables and plant-level power generation while maintaining high predictive accuracy.
 
 It serves as a foundational step toward intelligent, data-driven renewable energy management systems.
+
+---
+
+## Milestone 2: Agentic AI Grid Optimization Assistant
+
+### Overview
+
+Milestone 2 adds an agentic AI assistant built with LangGraph + RAG that analyzes solar forecast variability, retrieves grid management guidelines, and generates structured optimization recommendations.
+
+### Agent Workflow
+
+```
+┌─────────────────────┐     ┌──────────────────────┐     ┌───────────────────────────┐
+│  Node 1: Analyze    │ ──► │  Node 2: Retrieve    │ ──► │  Node 3: Generate         │
+│  Forecast           │     │  Guidelines (RAG)    │     │  Recommendations (LLM)    │
+│  (Pure Python)      │     │  (FAISS + MiniLM)    │     │  (Groq / Llama 3.1 8B)   │
+└─────────────────────┘     └──────────────────────┘     └───────────────────────────┘
+```
+
+- **Node 1**: Computes mean/max/min/std, variability %, risk level, risk periods, peak hours
+- **Node 2**: Builds query from analysis, retrieves top-4 grid management guidelines via FAISS
+- **Node 3**: Sends analysis + guidelines to Llama 3.1 8B (via Groq), returns structured JSON recommendations
+
+### Technology Stack (Milestone 2)
+
+* LangGraph — agentic workflow orchestration
+* LangChain — LLM integration
+* FAISS — vector similarity search
+* sentence-transformers (all-MiniLM-L6-v2) — local embeddings
+* Groq API — LLM inference (Llama 3.1 8B)
+
+### Setup
+
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Set Groq API key:
+```bash
+export GROQ_API_KEY=gsk_your_key_here
+```
+
+3. Run:
+```bash
+streamlit run app.py
+```
+
+For Streamlit Cloud: add `GROQ_API_KEY` to app secrets.
+
+### Usage
+
+1. **Tab 1**: Upload Plant Generation + Weather CSVs → view forecasts and metrics
+2. **Tab 2**: Click "Run Analysis" → view structured grid optimization recommendations
