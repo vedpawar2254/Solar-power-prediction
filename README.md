@@ -1,6 +1,6 @@
 # AI-Based Solar Energy Forecasting System
 
-## [![DEMO VIDEO](https://drive.google.com/file/d/1zbsRlWV4vuH6ZH11Pbx1G8gQHOVVCKG9/view?usp=sharing)
+## [DEMO VIDEO](https://drive.google.com/file/d/1zbsRlWV4vuH6ZH11Pbx1G8gQHOVVCKG9/view?usp=sharing)
 
 
 **15-minute ahead DC power forecasting + agentic grid optimisation assistant**
