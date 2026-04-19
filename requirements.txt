@@ -12,3 +12,4 @@ faiss-cpu==1.13.2
 sentence-transformers==5.4.1
 python-dotenv
 huggingface_hub
+fpdf2==2.7.9

@@ -107,237 +107,183 @@ WEATHER_REQUIRED = {"DATE_TIME", "AMBIENT_TEMPERATURE", "MODULE_TEMPERATURE", "I
 
 # ── Helper functions (must be defined before tabs) ────────────────────────────
 
-def _tex_escape(text: str) -> str:
-    """Escape LaTeX special characters."""
-    if not isinstance(text, str):
-        text = str(text)
-    replacements = {
-        '&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#',
-        '_': r'\_', '{': r'\{', '}': r'\}', '~': r'\textasciitilde{}',
-        '^': r'\textasciicircum{}', '\\': r'\textbackslash{}',
-    }
-    for char, replacement in replacements.items():
-        text = text.replace(char, replacement)
-    return text
-
-
 def _generate_pdf(analysis: dict, recommendations: dict) -> bytes:
-    """Generate a professional PDF report via LaTeX (compiled with tectonic)."""
-    import subprocess
-    import tempfile
+    """Generate a PDF report using fpdf2 (pure Python, no system dependencies)."""
+    from fpdf import FPDF
+    from datetime import date
+    import io
 
     metrics = st.session_state.get("forecast_metrics", {})
 
-    # Build numbered items (no dashes)
-    def _enum_items(items: list) -> str:
-        lines = []
-        for item in items:
-            if isinstance(item, dict):
-                item = item.get("action", item.get("strategy", item.get("description", str(item))))
-            lines.append(r"    \item " + _tex_escape(str(item)))
-        return "\n".join(lines)
+    class ReportPDF(FPDF):
+        def header(self):
+            if self.page_no() == 1:
+                return
+            self.set_font("Helvetica", "B", 8)
+            self.set_text_color(100, 100, 100)
+            self.cell(0, 6, "Solar Energy Forecasting — Grid Optimization Report", align="L")
+            self.ln(2)
+            self.set_draw_color(46, 134, 193)
+            self.set_line_width(0.3)
+            self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+            self.ln(4)
 
-    # Analysis table rows
-    analysis_rows = ""
+        def footer(self):
+            if self.page_no() == 1:
+                return
+            self.set_y(-15)
+            self.set_font("Helvetica", "", 8)
+            self.set_text_color(150, 150, 150)
+            self.cell(0, 10, f"Page {self.page_no() - 1}", align="C")
+
+    pdf = ReportPDF()
+    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf.set_margins(20, 20, 20)
+
+    # ── Title page ──────────────────────────────────────────────────────
+    pdf.add_page()
+    pdf.ln(35)
+    pdf.set_draw_color(46, 134, 193)
+    pdf.set_line_width(1)
+    pdf.line(20, pdf.get_y(), pdf.w - 20, pdf.get_y())
+    pdf.ln(10)
+
+    pdf.set_font("Helvetica", "B", 24)
+    pdf.set_text_color(0, 82, 155)
+    pdf.multi_cell(0, 11, "Solar Energy Forecasting\nGrid Optimization Report", align="C")
+    pdf.ln(8)
+
+    pdf.set_draw_color(46, 134, 193)
+    pdf.line(20, pdf.get_y(), pdf.w - 20, pdf.get_y())
+    pdf.ln(20)
+
+    report_date = date.today().strftime("%B %d, %Y")
+    for label, val in [
+        ("Project:", "Solar Power Generation Forecasting"),
+        ("Dataset:", "Kaggle Solar Plant Operational Data"),
+        ("Model:", "Random Forest Regressor (200 trees, depth 12)"),
+        ("Date:", report_date),
+    ]:
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.set_text_color(50, 50, 50)
+        pdf.cell(45, 9, label)
+        pdf.set_font("Helvetica", "", 11)
+        pdf.multi_cell(0, 9, val)
+
+    # ── Content pages ────────────────────────────────────────────────────
+    pdf.add_page()
+
+    def section_header(title):
+        pdf.set_font("Helvetica", "B", 13)
+        pdf.set_text_color(0, 82, 155)
+        pdf.cell(0, 9, title, ln=True)
+        pdf.set_draw_color(46, 134, 193)
+        pdf.set_line_width(0.5)
+        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+        pdf.ln(5)
+        pdf.set_text_color(50, 50, 50)
+
+    def subsection_header(title):
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.set_text_color(0, 82, 155)
+        pdf.cell(0, 8, title, ln=True)
+        pdf.ln(1)
+        pdf.set_text_color(50, 50, 50)
+
+    def table_row(label, value, shade=False):
+        pdf.set_fill_color(240, 245, 255) if shade else pdf.set_fill_color(255, 255, 255)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_text_color(50, 50, 50)
+        pdf.cell(110, 7, label, border=0, fill=True)
+        pdf.cell(0, 7, str(value), border=0, fill=True, ln=True)
+
+    def table_header():
+        pdf.set_fill_color(0, 82, 155)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(110, 7, "Metric", border=0, fill=True)
+        pdf.cell(0, 7, "Value", border=0, fill=True, ln=True)
+
+    # Forecast Analysis
     if analysis:
+        section_header("Forecast Analysis")
         rows = [
             ("Mean Power (W)", f"{analysis.get('mean_power', 0):,.2f}"),
             ("Max Power (W)", f"{analysis.get('max_power', 0):,.2f}"),
             ("Min Power (W)", f"{analysis.get('min_power', 0):,.2f}"),
-            ("Std.~Deviation (W)", f"{analysis.get('std_power', 0):,.2f}"),
-            ("Variability", f"{analysis.get('variability_pct', 0):.2f}\\%"),
-            ("Risk Level", _tex_escape(str(analysis.get('risk_level', 'N/A')))),
-            ("Mean Irradiation (kW/m\\textsuperscript{2})", f"{analysis.get('mean_irradiation', 0):.4f}"),
+            ("Std. Deviation (W)", f"{analysis.get('std_power', 0):,.2f}"),
+            ("Variability (%)", f"{analysis.get('variability_pct', 0):.2f}"),
+            ("Risk Level", str(analysis.get('risk_level', 'N/A'))),
+            ("Mean Irradiation (kW/m2)", f"{analysis.get('mean_irradiation', 0):.4f}"),
         ]
-        analysis_rows = " \\\\\n".join(f"        {label} & {val}" for label, val in rows) + " \\\\"
+        table_header()
+        for i, (label, val) in enumerate(rows):
+            table_row(label, val, shade=(i % 2 == 0))
+        pdf.ln(8)
 
-    # Model metrics table rows
-    metrics_rows = ""
+    # Model Performance
     if metrics:
+        section_header("Model Performance")
         mrows = [
-            ("Mean Absolute Error", f"{metrics.get('mae', 'N/A')}"),
-            ("Root Mean Squared Error", f"{metrics.get('rmse', 'N/A')}"),
-            ("$R^2$ Score", f"{metrics.get('r2', 'N/A')}"),
-            ("Anomalies Detected", f"{metrics.get('anomaly_count', 'N/A')}"),
-            ("Total Data Points", f"{metrics.get('total_points', 'N/A')}"),
+            ("Mean Absolute Error", str(metrics.get("mae", "N/A"))),
+            ("Root Mean Squared Error", str(metrics.get("rmse", "N/A"))),
+            ("R2 Score", str(metrics.get("r2", "N/A"))),
+            ("Anomalies Detected", str(metrics.get("anomaly_count", "N/A"))),
+            ("Total Data Points", str(metrics.get("total_points", "N/A"))),
         ]
-        metrics_rows = " \\\\\n".join(f"        {label} & {val}" for label, val in mrows) + " \\\\"
+        table_header()
+        for i, (label, val) in enumerate(mrows):
+            table_row(label, val, shade=(i % 2 == 0))
+        pdf.ln(8)
 
-    # Recommendation sections
-    summary = _tex_escape(str(recommendations.get("forecast_summary", ""))) if recommendations else ""
-    risk_text = _tex_escape(str(recommendations.get("risk_analysis", ""))) if recommendations else ""
-    actions = recommendations.get("actions", []) if recommendations else []
-    strategies = recommendations.get("optimization_strategies", []) if recommendations else []
-    refs = recommendations.get("references", []) if recommendations else []
+    # Recommendations
+    if recommendations:
+        section_header("Recommendations")
 
-    # Date
-    from datetime import date
-    report_date = date.today().strftime("%B %d, %Y")
-
-    tex_source = r"""\documentclass[11pt, a4paper]{article}
-
-\usepackage[margin=1in]{geometry}
-\usepackage{booktabs}
-\usepackage{enumitem}
-\usepackage{xcolor}
-\usepackage{titlesec}
-\usepackage{fancyhdr}
-\usepackage{parskip}
-\usepackage[hidelinks]{hyperref}
-
-% Colors from project branding
-\definecolor{headblue}{HTML}{00529B}
-\definecolor{ruleblue}{HTML}{2E86C1}
-\definecolor{textgray}{HTML}{333333}
-
-% Section styling
-\titleformat{\section}{\large\bfseries\color{headblue}}{}{0em}{}[\vspace{2pt}\color{ruleblue}\titlerule]
-\titleformat{\subsection}{\normalsize\bfseries\color{headblue}}{}{0em}{}
-
-% Header/footer
-\pagestyle{fancy}
-\fancyhf{}
-\renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\headrule}{\hbox to\headwidth{\color{ruleblue}\leaders\hrule height \headrulewidth\hfill}}
-\fancyhead[L]{\small\color{textgray} Solar Energy Forecasting}
-\fancyhead[R]{\small\color{textgray} Grid Optimization Report}
-\fancyfoot[C]{\small\color{textgray}\thepage}
-
-\color{textgray}
-
-\begin{document}
-
-% ── Title page ──────────────────────────────────────────────
-\begin{titlepage}
-\centering
-\vspace*{3cm}
-
-{\color{ruleblue}\rule{\textwidth}{1.5pt}}
-
-\vspace{0.8cm}
-{\Huge\bfseries\color{headblue} Solar Energy Forecasting\\[0.3cm]
-Grid Optimization Report}
-
-\vspace{0.6cm}
-{\color{ruleblue}\rule{\textwidth}{1.5pt}}
-
-\vspace{2cm}
-{\large
-\begin{tabular}{rl}
-\textbf{Project} & Solar Power Generation Forecasting \\[4pt]
-\textbf{Dataset} & Kaggle Solar Plant Operational Data \\[4pt]
-\textbf{Model} & Random Forest Regressor \\[4pt]
-\textbf{Date} & """ + report_date + r""" \\
-\end{tabular}
-}
-
-\vfill
-{\small Plant~1 Generation and Weather Sensor Data\quad$\cdot$\quad 15-Minute Forecast Horizon}
-\end{titlepage}
-
-% ── Forecast Analysis ───────────────────────────────────────
-\section{Forecast Analysis}
-
-The following table summarises the statistical properties of the predicted DC power output,
-computed over the full evaluation window.
-
-\vspace{6pt}
-\begin{table}[h]
-\centering
-\begin{tabular}{@{} l r @{}}
-    \toprule
-    \textbf{Metric} & \textbf{Value} \\
-    \midrule
-""" + analysis_rows + r"""
-    \bottomrule
-\end{tabular}
-\end{table}
-
-% ── Model Performance ──────────────────────────────────────
-\section{Model Performance}
-
-A Random Forest Regressor (200 estimators, max depth 12) was trained on an 80/20
-chronological split of the merged generation and weather dataset. Engineered features
-include lag values at $t{-}1$ and $t{-}4$, a rolling mean over 4 intervals, hour of day,
-day of year, and month.
-
-\vspace{6pt}
-\begin{table}[h]
-\centering
-\begin{tabular}{@{} l r @{}}
-    \toprule
-    \textbf{Metric} & \textbf{Value} \\
-    \midrule
-""" + metrics_rows + r"""
-    \bottomrule
-\end{tabular}
-\end{table}
-
-"""
-
-    if summary or risk_text:
-        tex_source += r"""
-% ── Recommendations ────────────────────────────────────────
-\section{Recommendations}
-"""
+        summary = recommendations.get("forecast_summary", "")
         if summary:
-            tex_source += r"""
-\subsection{Forecast Summary}
-""" + summary + "\n"
+            subsection_header("Forecast Summary")
+            pdf.set_font("Helvetica", "", 10)
+            pdf.multi_cell(0, 6, str(summary))
+            pdf.ln(4)
 
+        risk_text = recommendations.get("risk_analysis", "")
         if risk_text:
-            tex_source += r"""
-\subsection{Risk Assessment}
-""" + risk_text + "\n"
+            subsection_header("Risk Assessment")
+            pdf.set_font("Helvetica", "", 10)
+            pdf.multi_cell(0, 6, str(risk_text))
+            pdf.ln(4)
 
-    if actions:
-        tex_source += r"""
-\subsection{Immediate Actions}
-\begin{enumerate}[leftmargin=*, itemsep=4pt]
-""" + _enum_items(actions) + r"""
-\end{enumerate}
-"""
+        actions = recommendations.get("actions", [])
+        if actions:
+            subsection_header("Immediate Actions")
+            for i, action in enumerate(actions, 1):
+                if isinstance(action, dict):
+                    action = action.get("action", action.get("strategy", str(action)))
+                pdf.set_font("Helvetica", "", 10)
+                pdf.multi_cell(0, 6, f"{i}. {action}")
+            pdf.ln(4)
 
-    if strategies:
-        tex_source += r"""
-\subsection{Optimization Strategies}
-\begin{enumerate}[leftmargin=*, itemsep=4pt]
-""" + _enum_items(strategies) + r"""
-\end{enumerate}
-"""
+        strategies = recommendations.get("optimization_strategies", [])
+        if strategies:
+            subsection_header("Optimization Strategies")
+            for i, s in enumerate(strategies, 1):
+                if isinstance(s, dict):
+                    s = s.get("strategy", s.get("action", str(s)))
+                pdf.set_font("Helvetica", "", 10)
+                pdf.multi_cell(0, 6, f"{i}. {s}")
+            pdf.ln(4)
 
-    if refs:
-        tex_source += r"""
-\subsection{Referenced Guidelines}
-\begin{itemize}[leftmargin=*, itemsep=2pt]
-""" + "\n".join(r"    \item " + _tex_escape(str(r)) for r in refs) + r"""
-\end{itemize}
-"""
+        refs = recommendations.get("references", [])
+        if refs:
+            subsection_header("Referenced Guidelines")
+            for ref in refs:
+                pdf.set_font("Helvetica", "", 10)
+                pdf.multi_cell(0, 6, f"- {ref}")
 
-    tex_source += r"""
-\end{document}
-"""
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tex_path = os.path.join(tmpdir, "report.tex")
-        pdf_path = os.path.join(tmpdir, "report.pdf")
-
-        with open(tex_path, "w") as f:
-            f.write(tex_source)
-
-        result = subprocess.run(
-            ["tectonic", "-X", "compile", tex_path],
-            capture_output=True,
-            text=True,
-            cwd=tmpdir,
-            timeout=60,
-        )
-
-        if result.returncode != 0:
-            raise RuntimeError(f"LaTeX compilation failed:\n{result.stderr[-500:]}")
-
-        with open(pdf_path, "rb") as f:
-            return f.read()
+    buf = io.BytesIO()
+    pdf.output(buf)
+    return buf.getvalue()
 
 
 tab1, tab2 = st.tabs(["Solar Forecasting", "Grid Optimization Assistant"])
