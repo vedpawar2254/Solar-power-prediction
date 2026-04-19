@@ -1,8 +1,20 @@
+# Secrets & environment
 .env
-.DS_Store
-.venv/
+.streamlit/secrets.toml
+
+# Python artifacts
 __pycache__/
 *.pyc
-*.pkl
-.streamlit/secrets.toml
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+.venv/
+
+# OS
+.DS_Store
 node_modules/
+
+# Presentation files (not source code)
+Presentation*.pdf

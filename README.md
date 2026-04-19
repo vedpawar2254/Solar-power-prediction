@@ -44,6 +44,8 @@ echo "HF_REPO_ID=nakedved/genai-capstone" >> .env
 streamlit run app.py
 ```
 
+The model (`solar_forecast_model.pkl`) is tracked via **Git LFS** and will be pulled automatically on clone. Alternatively, set `HF_REPO_ID` and the app downloads it from HuggingFace at startup.
+
 ---
 
 ## Streamlit Cloud Deployment
@@ -82,7 +84,7 @@ Open `http://localhost:8501`
 |---|---|---|
 | `GROQ_API_KEY` | Yes | Groq API key for Llama 3.1 8B inference (Tab 2) |
 | `HF_REPO_ID` | Yes | HuggingFace repo ID for model download (`nakedved/genai-capstone`) |
-| `HF_TOKEN` | No | Only needed if the HF repo is set to private |
+| `HF_TOKEN` | No | Only needed if the HF repo is private |
 
 ---
 
@@ -94,10 +96,13 @@ Open `http://localhost:8501`
 ├── rag.py                  FAISS vector store and retrieval
 ├── knowledge_base.py       18 grid management guideline chunks
 ├── push_model_to_hf.py     One-time script to upload model to HuggingFace
-├── Dockerfile              Container definition
+├── solar_forecast_model.pkl  Trained model — tracked via Git LFS (16 MB)
+├── Dockerfile              Container definition (python:3.11-slim)
 ├── render.yaml             Docker/Render alternative deployment config
-├── requirements.txt        Pinned dependencies
-├── report.tex              LaTeX submission report (compiled → report.pdf)
+├── requirements.txt        Pinned Python dependencies
+├── report.tex              LaTeX submission report source
+├── report.pdf              Compiled submission report
+├── .gitattributes          Git LFS tracking rules
 ├── .streamlit/
 │   └── config.toml         Streamlit server config (headless, no CORS)
 ├── data/
@@ -154,14 +159,14 @@ Node 1: Analyse Forecast    →    Node 2: Retrieve Guidelines    →    Node 3:
 ```
 
 - **Node 1** — computes mean/max/min/std, variability %, risk level (Low/Medium/High), risk periods, peak hours
-- **Node 2** — builds semantic query from Node 1 output, retrieves top-4 passages from a 18-chunk grid management knowledge base using FAISS similarity search
+- **Node 2** — builds semantic query from Node 1 output, retrieves top-4 passages from an 18-chunk grid management knowledge base using FAISS similarity search
 - **Node 3** — sends analysis + retrieved passages to Llama 3.1 8B via Groq, returns structured recommendations
 
 ---
 
 ## Model
 
-Trained model is hosted on HuggingFace at [`nakedved/genai-capstone`](https://huggingface.co/nakedved/genai-capstone). The app downloads it at startup via `hf_hub_download` and caches with `@st.cache_resource`. No model file is bundled in the Docker image.
+Trained model is stored in this repo via **Git LFS** and also hosted on HuggingFace at [`nakedved/genai-capstone`](https://huggingface.co/nakedved/genai-capstone). The app downloads it from HuggingFace at startup when `HF_REPO_ID` is set, otherwise falls back to the local `.pkl`.
 
 | Property | Value |
 |---|---|
@@ -193,12 +198,12 @@ Plant 1: 68,778 inverter-level records → 3,157 plant-level timestamps after ag
 | Agentic workflow | LangGraph 1.1, LangChain 1.2 |
 | Vector search | FAISS 1.13 + sentence-transformers 5.4 (all-MiniLM-L6-v2) |
 | LLM inference | Groq API — Llama 3.1 8B Instant |
-| Model hosting | HuggingFace Hub |
+| Model hosting | HuggingFace Hub + Git LFS |
 | Web UI | Streamlit 1.54 |
 | PDF generation | LaTeX via tectonic 0.16 |
 | Containerisation | Docker (python:3.11-slim) |
 | Deployment | Streamlit Cloud |
-| Data | Pandas 3.0, NumPy 2.4 |
+| Data | Pandas 2.2, NumPy 2.4 |
 
 ---
 
