@@ -1,5 +1,8 @@
 # AI-Based Solar Energy Forecasting System
 
+## [![DEMO VIDEO](https://drive.google.com/file/d/1zbsRlWV4vuH6ZH11Pbx1G8gQHOVVCKG9/view?usp=sharing)
+
+
 **15-minute ahead DC power forecasting + agentic grid optimisation assistant**
 
 [![Milestone 2](https://img.shields.io/badge/Milestone%202-Streamlit-FF4B4B)](https://solarpowerpredictionmodel.streamlit.app/)
