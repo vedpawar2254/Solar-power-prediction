@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: solar-energy-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false          # set manually in Render dashboard
+      - key: HF_REPO_ID
+        sync: false          # e.g. yourname/solar-forecast-model
+      - key: HF_TOKEN
+        sync: false          # only needed if repo is private
+    healthCheckPath: /_stcore/health
+    autoDeploy: true

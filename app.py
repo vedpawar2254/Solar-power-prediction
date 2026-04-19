@@ -64,18 +64,34 @@ st.title("AI-Based Solar Energy System")
 
 # ── Model loading (once, cached) ──────────────────────────────────────────────
 
-MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "solar_forecast_model.pkl")
+HF_REPO_ID = os.environ.get("HF_REPO_ID", "")
+LOCAL_MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "solar_forecast_model.pkl")
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner="Loading forecast model...")
 def load_model():
-    return joblib.load(MODEL_PATH)
+    if HF_REPO_ID:
+        from huggingface_hub import hf_hub_download
+        token = os.environ.get("HF_TOKEN") or None
+        path = hf_hub_download(
+            repo_id=HF_REPO_ID,
+            filename="solar_forecast_model.pkl",
+            token=token,
+        )
+        return joblib.load(path)
+    # Local fallback for development
+    if not os.path.exists(LOCAL_MODEL_PATH):
+        raise FileNotFoundError(LOCAL_MODEL_PATH)
+    return joblib.load(LOCAL_MODEL_PATH)
 
 
 try:
     model = load_model()
 except FileNotFoundError:
-    st.error(f"Model file not found at `{MODEL_PATH}`. Place `solar_forecast_model.pkl` in the project directory.")
+    st.error(
+        "Model not found. Either set `HF_REPO_ID` in `.env` to pull from HuggingFace, "
+        "or place `solar_forecast_model.pkl` in the project directory."
+    )
     st.stop()
 except Exception as e:
     st.error(f"Failed to load model: {e}")

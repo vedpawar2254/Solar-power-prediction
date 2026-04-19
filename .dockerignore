@@ -1,0 +1,13 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+*.pkl
+data/
+milestone_1/
+report.pdf
+report.tex
+.git/
+.gitignore
+*.md
+push_model_to_hf.py

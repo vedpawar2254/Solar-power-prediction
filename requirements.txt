@@ -11,3 +11,4 @@ langchain-groq==1.1.2
 faiss-cpu==1.13.2
 sentence-transformers==5.4.1
 python-dotenv
+huggingface_hub
