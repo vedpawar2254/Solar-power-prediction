@@ -1,6 +1,7 @@
 """LangGraph agentic workflow: 3-node linear pipeline for grid optimization."""
 
 import os
+import re
 import json
 from typing import Optional, TypedDict
 
@@ -112,11 +113,9 @@ Respond with ONLY valid JSON (no markdown, no code fences) with these 5 keys:
         content = response.content.strip()
 
         # Strip markdown code fences if present
-        if content.startswith("```"):
-            content = content.split("\n", 1)[1]
-            if content.endswith("```"):
-                content = content[:-3]
-            content = content.strip()
+        content = re.sub(r'^```\w*\n?', '', content, count=1)
+        content = re.sub(r'\n?```\s*$', '', content)
+        content = content.strip()
 
         recommendations = json.loads(content)
         return {"recommendations": recommendations}
@@ -146,3 +145,44 @@ def build_agent():
 
 
 agent = build_agent()
+
+
+# ── Chat follow-up function ──────────────────────────────────────────────────
+
+def chat_with_context(
+    question: str,
+    analysis: dict,
+    recommendations: dict,
+    retrieved_docs: list[str],
+) -> str:
+    """Answer follow-up questions using analysis context + RAG docs."""
+    context_parts = []
+    if analysis:
+        context_parts.append(f"## Forecast Analysis\n{json.dumps(analysis, indent=2)}")
+    if recommendations:
+        context_parts.append(f"## Current Recommendations\n{json.dumps(recommendations, indent=2)}")
+    if retrieved_docs:
+        context_parts.append("## Grid Management Guidelines\n" + "\n".join(f"- {d}" for d in retrieved_docs))
+
+    # Retrieve additional docs relevant to the question
+    extra_docs = retrieve(question, k=2)
+    if extra_docs:
+        context_parts.append("## Additional Guidelines\n" + "\n".join(f"- {d}" for d in extra_docs))
+
+    context = "\n\n".join(context_parts)
+
+    prompt = f"""You are a solar grid optimization expert. Use the context below to answer the user's question.
+Be specific and reference data from the analysis when relevant. Keep answers concise.
+
+{context}
+
+User question: {question}"""
+
+    api_key = os.environ.get("GROQ_API_KEY", "")
+    llm = ChatGroq(
+        model="llama-3.1-8b-instant",
+        api_key=api_key,
+        temperature=0.3,
+    )
+    response = llm.invoke(prompt)
+    return response.content.strip()

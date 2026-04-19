@@ -1,2 +1,8 @@
 .env
 .DS_Store
+.venv/
+__pycache__/
+*.pyc
+*.pkl
+.streamlit/secrets.toml
+node_modules/
