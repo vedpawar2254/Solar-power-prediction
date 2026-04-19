@@ -12,7 +12,7 @@ RUN curl -fsSL \
     -o /tmp/tectonic.tar.gz \
     && tar -xz -C /usr/local/bin -f /tmp/tectonic.tar.gz \
     && rm /tmp/tectonic.tar.gz \
-    && tectonic --version
+    && which tectonic
 
 WORKDIR /app
 

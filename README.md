@@ -1,373 +1,197 @@
 # AI-Based Solar Energy Forecasting System
 
----
+**15-minute ahead DC power forecasting + agentic grid optimisation assistant**
 
-## 1. Project Overview
-
-This project develops a machine learning-based system to forecast short-term solar power generation (15-minute ahead) using historical plant generation and weather sensor data.
-
-The system integrates preprocessing, feature engineering, regression modeling, and deployment through a web-based interface built using Streamlit.
-
-The final solution allows users to upload raw plant data and receive:
-
-* 15-minute ahead power forecasts
-* Performance evaluation metrics
-* Visual trend analysis
-* Hourly seasonal behavior insights
-
----
-## 2. Problem Statement
-
-Solar energy generation is inherently variable due to:
-
-•⁠  ⁠Cloud cover fluctuations
-•⁠  ⁠Temperature variation
-•⁠  ⁠Irradiance instability
-•⁠  ⁠Diurnal and seasonal cycles
-
-Grid operators require short-term forecasting to:
-
-•⁠  ⁠Maintain grid stability
-•⁠  ⁠Optimize battery storage
-•⁠  ⁠Balance demand and supply
-•⁠  ⁠Reduce reliance on fossil fuel backups
-
-The core problem is:
-
-- ⁠Given historical inverter-level solar generation data and environmental conditions, predict the plant-level DC power output 15 minutes into the future.
-
-Key challenges:
-
-•⁠  ⁠Strong time-dependency in power output
-•⁠  ⁠Nonlinear relationships between weather and generation
-•⁠  ⁠High variance during sunrise and sunset transitions
-•⁠  ⁠Noise in inverter-level measurements
-
-This system addresses the problem as a supervised regression task with temporal feature engineering.
+[![Streamlit App](https://img.shields.io/badge/Live%20App-Render-brightgreen)](https://solar-power-prediction-81xp.onrender.com)
+[![Model on HuggingFace](https://img.shields.io/badge/Model-HuggingFace-yellow)](https://huggingface.co/nakedved/genai-capstone)
+[![GitHub](https://img.shields.io/badge/GitHub-Repo-blue)](https://github.com/vedpawar2254/Solar-power-prediction)
 
 ---
 
-## 3. Team
+## Overview
 
-* Ved — Model development, feature engineering, deployment, system integration
-* Aviral Mishra — Data and Quality Lead
-* Naitik Pandey — Report and Evaluation Lead
-* Samarth Khera — Analysis Lead
+Two-milestone GenAI capstone project.
+
+**Milestone 1** — Classical ML pipeline: ingest raw inverter-level solar plant data, engineer temporal features, train a RandomForestRegressor, serve predictions through a Streamlit UI.
+
+**Milestone 2** — Agentic layer: LangGraph 3-node workflow that analyses forecast variability, retrieves grid management guidelines via FAISS RAG, and generates structured optimisation recommendations using Llama 3.1 8B via Groq.
 
 ---
 
-## 4. Repository Structure
+## Live Deployment
+
+| Resource | URL |
+|---|---|
+| Streamlit App (Render) | https://solar-power-prediction-81xp.onrender.com |
+| Model (HuggingFace) | https://huggingface.co/nakedved/genai-capstone |
+| GitHub | https://github.com/vedpawar2254/Solar-power-prediction |
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/vedpawar2254/Solar-power-prediction
+cd Solar-power-prediction
+
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# Create .env with your keys
+echo "GROQ_API_KEY=your_groq_key" >> .env
+echo "HF_REPO_ID=nakedved/genai-capstone" >> .env
+
+streamlit run app.py
+```
+
+---
+
+## Docker
+
+```bash
+docker build -t solar-ai .
+
+docker run -p 8501:8501 \
+  -e GROQ_API_KEY=your_groq_key \
+  -e HF_REPO_ID=nakedved/genai-capstone \
+  solar-ai
+```
+
+Open `http://localhost:8501`
+
+---
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GROQ_API_KEY` | Yes | Groq API key for Llama 3.1 8B inference (Tab 2) |
+| `HF_REPO_ID` | Yes | HuggingFace repo ID for model download (`nakedved/genai-capstone`) |
+| `HF_TOKEN` | No | Only needed if the HF repo is set to private |
+
+---
+
+## Repository Structure
 
 ```
-Genai capstone/
-├── app.py                      # Unified Streamlit app (Tab 1 + Tab 2)
-├── agent.py                    # LangGraph 3-node agentic workflow
-├── rag.py                      # FAISS vector store + retriever
-├── knowledge_base.py           # Grid management text chunks
-├── solar_forecast_model.pkl    # Trained ML model
-├── requirements.txt            # Dependencies
-├── README.md                   # Project documentation
-├── data/                       # Shared datasets
+├── app.py                  Streamlit app — Tab 1 (forecast) + Tab 2 (AI agent)
+├── agent.py                LangGraph 3-node workflow + follow-up chat function
+├── rag.py                  FAISS vector store and retrieval
+├── knowledge_base.py       18 grid management guideline chunks
+├── push_model_to_hf.py     One-time script to upload model to HuggingFace
+├── Dockerfile              Container definition
+├── render.yaml             Render deployment config
+├── requirements.txt        Pinned dependencies
+├── report.tex              LaTeX submission report (compiled → report.pdf)
+├── .streamlit/
+│   └── config.toml         Streamlit server config (headless, no CORS)
+├── data/
 │   ├── Plant_1_Generation_Data.csv
 │   ├── Plant_1_Weather_Sensor_Data.csv
 │   ├── Plant_2_Generation_Data.csv
 │   └── Plant_2_Weather_Sensor_Data.csv
-└── milestone_1/                # Original Milestone 1 files
+└── milestone_1/
     ├── app.py
-    ├── solar_model.ipynb
-    ├── solar_forecast_model.pkl
-    ├── requirements.txt
+    ├── solar_model.ipynb   Training notebook
     └── ARCHITECTURE.md
 ```
 
 ---
 
-## 5. Technology Stack
+## Application Features
 
-* Python 3.x
-* scikit-learn
-* Streamlit
-* Pandas
-* NumPy
-* Matplotlib
-* Joblib
+### Tab 1 — Solar Forecasting
 
-Development Environment:
+- Upload Plant Generation + Weather Sensor CSVs
+- Automatic preprocessing: aggregation, merge, feature engineering
+- 15-minute ahead DC power prediction
+- MAE / RMSE / R² metrics
+- Forecast chart with adjustable display window (50–1,000 points)
+- Anomaly detection — flags points where prediction error exceeds a configurable threshold
+- Hourly trend bar chart + irradiation scatter plot
+- Download predictions as CSV (timestamp, actual, predicted, error, anomaly flag)
 
-* Google Colab
+### Tab 2 — Grid Optimisation Assistant
 
----
-
-## 6. Dataset
-
-Source:
-
-* Kaggle Solar Power Generation Dataset
-
-Data Components:
-
-1. **Generation Data**
-
-   * DC_POWER (per inverter)
-   * DATE_TIME
-   * PLANT_ID
-   * SOURCE_KEY
-
-2. **Weather Sensor Data**
-
-   * AMBIENT_TEMPERATURE
-   * MODULE_TEMPERATURE
-   * IRRADIATION
-
-Preprocessing includes:
-
-* Aggregation to plant-level power
-* Timestamp alignment
-* Removal of missing values
-* Temporal sorting
+- **Run Analysis** — triggers LangGraph pipeline on the loaded forecast
+- Forecast statistics: mean/max/min power, variability %, risk level, mean irradiation
+- Colour-coded risk banner (High / Medium / Low)
+- LLM-generated recommendations: forecast summary, risk assessment, immediate actions, optimisation strategies, referenced guidelines
+- Follow-up chat — conversational interface backed by RAG context
+- **Generate Report** — exports a LaTeX-compiled PDF with all analysis and recommendations
 
 ---
 
-## 7. Methodology
+## Architecture
 
-### Step 1: Data Aggregation
-
-Inverter-level DC_POWER is aggregated to obtain plant-level output.
-
-### Step 2: Data Integration
-
-Generation data is merged with weather sensor data using timestamp alignment.
-
-### Step 3: Feature Engineering
-
-Time-Based Features:
-
-* Hour
-* Day of Year
-* Month
-
-Lag Features:
-
-* Power at t-1
-* Power at t-4
-* Rolling mean (4 intervals)
-
-Target Engineering:
-
-* Shift DC_POWER by -1 to predict 15-minute ahead output.
-
-### Step 4: Model Training
-
-Model Used:
-
-* RandomForestRegressor
-
-Hyperparameters:
-
-* n_estimators = 200
-* max_depth = 12
-* random_state = 42
-
-This model was selected due to:
-
-* Ability to model nonlinear relationships
-* Robustness to noise
-* Strong performance on tabular structured data
-
----
-
-## 8. Architecture Overview
-
-The system follows a batch inference architecture:
-
-### Data Flow
-
-User Upload
-↓
-Data Aggregation
-↓
-Weather Merge
-↓
-Feature Engineering
-↓
-Load Trained Model
-↓
-15-Minute Prediction
-↓
-Evaluation + Visualization
-
-### Architectural Layers
-
-1. Data Layer
-2. Feature Engineering Layer
-3. Machine Learning Layer
-4. Application Layer (Streamlit UI)
-
-This is a batch-based ML inference system, not a streaming real-time system.
-
----
-
-## 9. Results
-
-Example Daytime Performance:
-
-* MAE: 4646.83
-* RMSE: 7397.92
-* R²: 0.9905
-
-Full Dataset Performance:
-
-* MAE: 10573.81
-* RMSE: 21207.71
-* R²: 0.9323
-
-Observations:
-
-* Strong predictive capability during stable daylight hours
-* Increased error during sunrise/sunset transitions
-* Model captures nonlinear weather-power relationships effectively
-
----
-
-## 10. Tradeoffs
-
-### Why Random Forest?
-
-Pros:
-
-* Handles nonlinear data well
-* Low preprocessing complexity
-* Resistant to overfitting
-
-Cons:
-
-* Larger model size
-* Slower inference compared to linear models
-* No explicit temporal memory (compared to LSTMs)
-
-### Why Batch Inference?
-
-Pros:
-
-* Simpler deployment
-* Lower infrastructure complexity
-* Suitable for academic demonstration
-
-Cons:
-
-* Not real-time
-* Cannot respond to streaming grid inputs
-
----
-
-## 11. Streamlit Application
-
-deployed link: https://solarpowerpredictionmodel.streamlit.app/
-
-The application is built using:
-
-* Streamlit
-
-Features:
-
-* Upload raw Kaggle CSV files
-* Automatic preprocessing
-* 15-minute ahead forecast
-* Performance metrics display
-* Time-series visualization
-* Hourly trend analysis
-
-Run locally:
-
-```bash
-python3 -m streamlit run app.py
-```
-
-- Format code: python3 -m black app.py
-- Lint with Flake8: python3 -m flake8 app.py
-- Lint with Pylint: python3 -m pylint app.py
-
----
-
-## 12. Future Work & Current Limitations
-
-### Current Limitations
-
-* Batch-only forecasting
-* No real-time data ingestion
-* No hyperparameter optimization
-* No cross-validation pipeline
-* No model drift detection
-
-### Future Improvements
-
-* Implement LSTM or Temporal Convolutional Networks
-* Add real-time streaming architecture (Kafka + API layer)
-* Deploy as REST API
-* Add hyperparameter tuning (GridSearchCV)
-* Add weather forecast integration
-* Implement model monitoring dashboard
-
----
-
-## 13. Conclusion
-
-This project demonstrates a complete machine learning pipeline for short-term solar power forecasting, from raw data ingestion to deployment through a web application.
-
-The system successfully models nonlinear relationships between environmental variables and plant-level power generation while maintaining high predictive accuracy.
-
-It serves as a foundational step toward intelligent, data-driven renewable energy management systems.
-
----
-
-## Milestone 2: Agentic AI Grid Optimization Assistant
-
-### Overview
-
-Milestone 2 adds an agentic AI assistant built with LangGraph + RAG that analyzes solar forecast variability, retrieves grid management guidelines, and generates structured optimization recommendations.
-
-### Agent Workflow
+### Milestone 1 — Batch Inference Pipeline
 
 ```
-┌─────────────────────┐     ┌──────────────────────┐     ┌───────────────────────────┐
-│  Node 1: Analyze    │ ──► │  Node 2: Retrieve    │ ──► │  Node 3: Generate         │
-│  Forecast           │     │  Guidelines (RAG)    │     │  Recommendations (LLM)    │
-│  (Pure Python)      │     │  (FAISS + MiniLM)    │     │  (Groq / Llama 3.1 8B)   │
-└─────────────────────┘     └──────────────────────┘     └───────────────────────────┘
+User Upload → Data Aggregation → Weather Merge → Feature Engineering
+           → RandomForest Inference → Evaluation (MAE/RMSE/R²) → Visualisation
 ```
 
-- **Node 1**: Computes mean/max/min/std, variability %, risk level, risk periods, peak hours
-- **Node 2**: Builds query from analysis, retrieves top-4 grid management guidelines via FAISS
-- **Node 3**: Sends analysis + guidelines to Llama 3.1 8B (via Groq), returns structured JSON recommendations
+### Milestone 2 — Agentic Workflow
 
-### Technology Stack (Milestone 2)
-
-* LangGraph — agentic workflow orchestration
-* LangChain — LLM integration
-* FAISS — vector similarity search
-* sentence-transformers (all-MiniLM-L6-v2) — local embeddings
-* Groq API — LLM inference (Llama 3.1 8B)
-
-### Setup
-
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
+```
+Node 1: Analyse Forecast    →    Node 2: Retrieve Guidelines    →    Node 3: Generate Recommendations
+(pure Python stats)               (FAISS + all-MiniLM-L6-v2)         (Groq / Llama 3.1 8B)
 ```
 
-2. Set Groq API key:
-```bash
-export GROQ_API_KEY=gsk_your_key_here
-```
+- **Node 1** — computes mean/max/min/std, variability %, risk level (Low/Medium/High), risk periods, peak hours
+- **Node 2** — builds semantic query from Node 1 output, retrieves top-4 passages from a 18-chunk grid management knowledge base using FAISS similarity search
+- **Node 3** — sends analysis + retrieved passages to Llama 3.1 8B via Groq, returns structured recommendations
 
-3. Run:
-```bash
-streamlit run app.py
-```
+---
 
-For Streamlit Cloud: add `GROQ_API_KEY` to app secrets.
+## Model
 
-### Usage
+Trained model is hosted on HuggingFace at [`nakedved/genai-capstone`](https://huggingface.co/nakedved/genai-capstone). The app downloads it at startup via `hf_hub_download` and caches with `@st.cache_resource`. No model file is bundled in the Docker image.
 
-1. **Tab 1**: Upload Plant Generation + Weather CSVs → view forecasts and metrics
-2. **Tab 2**: Click "Run Analysis" → view structured grid optimization recommendations
+| Property | Value |
+|---|---|
+| Algorithm | RandomForestRegressor |
+| n_estimators | 200 |
+| max_depth | 12 |
+| Input features | 9 |
+| R² — daytime | 0.9905 |
+| R² — full dataset | 0.9323 |
+| MAE — full dataset | 10,573.81 W |
+
+**Features:** `AMBIENT_TEMPERATURE`, `MODULE_TEMPERATURE`, `IRRADIATION`, `hour`, `day_of_year`, `month`, `lag_1`, `lag_4`, `rolling_mean_4`
+
+---
+
+## Dataset
+
+[Kaggle Solar Power Generation Data](https://www.kaggle.com/datasets/anikannal/solar-power-generation-data) — real operational records from two Indian solar plants, 15-minute intervals, May–June 2020.
+
+Plant 1: 68,778 inverter-level records → 3,157 plant-level timestamps after aggregation.
+
+---
+
+## Technology Stack
+
+| Category | Stack |
+|---|---|
+| ML | scikit-learn 1.8 (RandomForestRegressor) |
+| Agentic workflow | LangGraph 1.1, LangChain 1.2 |
+| Vector search | FAISS 1.13 + sentence-transformers 5.4 (all-MiniLM-L6-v2) |
+| LLM inference | Groq API — Llama 3.1 8B Instant |
+| Model hosting | HuggingFace Hub |
+| Web UI | Streamlit 1.54 |
+| PDF generation | LaTeX via tectonic 0.16 |
+| Containerisation | Docker (python:3.11-slim) |
+| Deployment | Render (free tier) |
+| Data | Pandas 3.0, NumPy 2.4 |
+
+---
+
+## Team
+
+| Member | Role |
+|---|---|
+| Ved | Tech Lead — model development, feature engineering, deployment, system integration |
+| Aviral Mishra | Data & Quality Lead — dataset preparation, preprocessing pipeline |
+| Naitik Pandey | Report & Evaluation Lead — metrics analysis, documentation |
+| Samarth Khera | Analysis Lead — trend analysis, visualisation |
