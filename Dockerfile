@@ -18,8 +18,8 @@ WORKDIR /app
 
 # Install Python dependencies first (layer cached unless requirements change)
 COPY requirements.txt .
-RUN pip install --no-cache-dir uv \
-    && uv pip install --system --no-cache -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copy application source
 COPY app.py agent.py rag.py knowledge_base.py ./
