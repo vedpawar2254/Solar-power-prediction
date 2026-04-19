@@ -150,7 +150,9 @@ def _generate_pdf(analysis: dict, recommendations: dict) -> bytes:
 
     pdf.set_font("Helvetica", "B", 24)
     pdf.set_text_color(0, 82, 155)
-    pdf.multi_cell(0, 11, "Solar Energy Forecasting\nGrid Optimization Report", align="C")
+    usable_w = pdf.w - pdf.l_margin - pdf.r_margin
+    pdf.set_x(pdf.l_margin)
+    pdf.multi_cell(usable_w, 11, "Solar Energy Forecasting\nGrid Optimization Report", align="C")
     pdf.ln(8)
 
     pdf.set_draw_color(46, 134, 193)
@@ -168,7 +170,7 @@ def _generate_pdf(analysis: dict, recommendations: dict) -> bytes:
         pdf.set_text_color(50, 50, 50)
         pdf.cell(45, 9, label)
         pdf.set_font("Helvetica", "", 11)
-        pdf.multi_cell(0, 9, val)
+        pdf.cell(0, 9, val, ln=True)
 
     # ── Content pages ────────────────────────────────────────────────────
     pdf.add_page()
@@ -240,18 +242,22 @@ def _generate_pdf(analysis: dict, recommendations: dict) -> bytes:
     if recommendations:
         section_header("Recommendations")
 
+        usable_w = pdf.w - pdf.l_margin - pdf.r_margin
+
         summary = recommendations.get("forecast_summary", "")
         if summary:
             subsection_header("Forecast Summary")
             pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 6, str(summary))
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(usable_w, 6, str(summary))
             pdf.ln(4)
 
         risk_text = recommendations.get("risk_analysis", "")
         if risk_text:
             subsection_header("Risk Assessment")
             pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 6, str(risk_text))
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(usable_w, 6, str(risk_text))
             pdf.ln(4)
 
         actions = recommendations.get("actions", [])
@@ -261,7 +267,8 @@ def _generate_pdf(analysis: dict, recommendations: dict) -> bytes:
                 if isinstance(action, dict):
                     action = action.get("action", action.get("strategy", str(action)))
                 pdf.set_font("Helvetica", "", 10)
-                pdf.multi_cell(0, 6, f"{i}. {action}")
+                pdf.set_x(pdf.l_margin)
+                pdf.multi_cell(usable_w, 6, f"{i}. {action}")
             pdf.ln(4)
 
         strategies = recommendations.get("optimization_strategies", [])
@@ -271,7 +278,8 @@ def _generate_pdf(analysis: dict, recommendations: dict) -> bytes:
                 if isinstance(s, dict):
                     s = s.get("strategy", s.get("action", str(s)))
                 pdf.set_font("Helvetica", "", 10)
-                pdf.multi_cell(0, 6, f"{i}. {s}")
+                pdf.set_x(pdf.l_margin)
+                pdf.multi_cell(usable_w, 6, f"{i}. {s}")
             pdf.ln(4)
 
         refs = recommendations.get("references", [])
@@ -279,7 +287,8 @@ def _generate_pdf(analysis: dict, recommendations: dict) -> bytes:
             subsection_header("Referenced Guidelines")
             for ref in refs:
                 pdf.set_font("Helvetica", "", 10)
-                pdf.multi_cell(0, 6, f"- {ref}")
+                pdf.set_x(pdf.l_margin)
+                pdf.multi_cell(usable_w, 6, f"- {ref}")
 
     buf = io.BytesIO()
     pdf.output(buf)
