@@ -2,7 +2,7 @@
 
 **15-minute ahead DC power forecasting + agentic grid optimisation assistant**
 
-[![Streamlit App](https://img.shields.io/badge/Live%20App-Render-brightgreen)](https://solar-power-prediction-81xp.onrender.com)
+[![Streamlit App](https://img.shields.io/badge/Live%20App-Streamlit-FF4B4B)](https://solarpowerpredictionmodel.streamlit.app/)
 [![Model on HuggingFace](https://img.shields.io/badge/Model-HuggingFace-yellow)](https://huggingface.co/nakedved/genai-capstone)
 [![GitHub](https://img.shields.io/badge/GitHub-Repo-blue)](https://github.com/vedpawar2254/Solar-power-prediction)
 
@@ -22,7 +22,7 @@ Two-milestone GenAI capstone project.
 
 | Resource | URL |
 |---|---|
-| Streamlit App (Render) | https://solar-power-prediction-81xp.onrender.com |
+| Streamlit App | https://solarpowerpredictionmodel.streamlit.app/ |
 | Model (HuggingFace) | https://huggingface.co/nakedved/genai-capstone |
 | GitHub | https://github.com/vedpawar2254/Solar-power-prediction |
 
@@ -46,7 +46,22 @@ streamlit run app.py
 
 ---
 
-## Docker
+## Streamlit Cloud Deployment
+
+1. Fork / push this repo to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io) → **New app** → select repo + `app.py`
+3. Under **Advanced settings → Secrets**, add:
+
+```toml
+GROQ_API_KEY = "your_groq_key"
+HF_REPO_ID   = "nakedved/genai-capstone"
+```
+
+4. Click **Deploy** — the app pulls the model from HuggingFace at first load.
+
+---
+
+## Docker (local / self-hosted)
 
 ```bash
 docker build -t solar-ai .
@@ -80,7 +95,7 @@ Open `http://localhost:8501`
 ├── knowledge_base.py       18 grid management guideline chunks
 ├── push_model_to_hf.py     One-time script to upload model to HuggingFace
 ├── Dockerfile              Container definition
-├── render.yaml             Render deployment config
+├── render.yaml             Docker/Render alternative deployment config
 ├── requirements.txt        Pinned dependencies
 ├── report.tex              LaTeX submission report (compiled → report.pdf)
 ├── .streamlit/
@@ -182,7 +197,7 @@ Plant 1: 68,778 inverter-level records → 3,157 plant-level timestamps after ag
 | Web UI | Streamlit 1.54 |
 | PDF generation | LaTeX via tectonic 0.16 |
 | Containerisation | Docker (python:3.11-slim) |
-| Deployment | Render (free tier) |
+| Deployment | Streamlit Cloud |
 | Data | Pandas 3.0, NumPy 2.4 |
 
 ---

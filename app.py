@@ -18,11 +18,13 @@ from agent import agent, chat_with_context
 
 load_dotenv(override=True)
 
-if "GROQ_API_KEY" not in os.environ:
-    try:
-        os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
-    except Exception:
-        pass
+# Pull secrets from st.secrets when env vars are absent (Streamlit Cloud)
+for _key in ("GROQ_API_KEY", "HF_REPO_ID", "HF_TOKEN"):
+    if not os.environ.get(_key):
+        try:
+            os.environ[_key] = st.secrets[_key]
+        except Exception:
+            pass
 
 st.set_page_config(page_title="Solar Energy AI System", layout="wide")
 
